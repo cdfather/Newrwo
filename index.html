@@ -4,14 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>KYC - Open Source Community AI Project</title>
-  
-  <!-- Clerk SDK (UI Bileşenleri Desteği ile) -->
-  <script
-    async
-    crossorigin="anonymous"
-    data-clerk-publishable-key="pk_test_cmVhZHktZ3JvdXBlci0zNzYwLmNsZXJrLmFjY291bnRzLmRldiQ"
-    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js">
-  </script>
+
 
   <style>
     * {
@@ -316,6 +309,16 @@
       border-radius: 30px;
       cursor: pointer;
     }
+
+    .error-message {
+      background-color: #ffe6e6;
+      color: #c00000;
+      padding: 12px 16px;
+      border-radius: 4px;
+      font-size: 14px;
+      margin-bottom: 16px;
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -358,6 +361,8 @@
 
   <!-- DOĞRULAMA KARTI -->
   <div class="card" id="captcha-card">
+    <div class="error-message" id="error-msg"></div>
+    
     <div class="header">
       <div class="sub-title">Lütfen görseli inceleyin</div>
       <div class="main-title">Lütfen görselde ne gördüğünüzü aşağıdaki kutucuğa yazın</div>
@@ -385,7 +390,7 @@
     <div class="checkmark-circle"></div>
     <div class="completion-title">BUGÜNLÜK BU KADAR</div>
     <div class="completion-subtitle">Desteğin için teşekkürler</div>
-    <button class="home-btn" onclick="javascript:void(0)">ANA EKRANA DÖN</button>
+    <button class="home-btn" onclick="goHome()">ANA EKRANA DÖN</button>
   </div>
 
   <script>
@@ -393,20 +398,39 @@
     const maxSolves = Math.floor(Math.random() * 3) + 4;
 
     window.addEventListener('load', async () => {
-      // Clerk bileşenlerini sorunsuz yükle
-      await window.Clerk.load();
-
-      if (window.Clerk.user) {
-        showLabellingScreen();
+      try {
+        await window.Clerk.load();
+        
+        // User state değişimini dinle
+        window.Clerk.addListener(({ user }) => {
+          if (user) {
+            showLabellingScreen();
+          }
+        });
+        
+        // Kullanıcı zaten giriş yapmışsa direkt başla
+        if (window.Clerk.user) {
+          showLabellingScreen();
+        }
+      } catch (err) {
+        console.error('Clerk yükleme hatası:', err);
       }
     });
 
     async function startProcess() {
-      if (!window.Clerk.user) {
-        // Hazır giriş/kayıt pop-up ekranını tetikler
-        window.Clerk.openSignIn();
-      } else {
-        showLabellingScreen();
+      try {
+        if (!window.Clerk.user) {
+          // GitHub Pages URL'si ile redirect
+          await window.Clerk.openSignIn({
+            afterSignInUrl: 'https://cdfather.github.io/Newrwo/',
+            afterSignUpUrl: 'https://cdfather.github.io/Newrwo/',
+            redirectUrl: 'https://cdfather.github.io/Newrwo/'
+          });
+        } else {
+          showLabellingScreen();
+        }
+      } catch (err) {
+        console.error('Giriş hatası:', err);
       }
     }
 
@@ -455,8 +479,11 @@
         }, 800);
       }
     }
+
+    function goHome() {
+      location.reload();
+    }
   </script>
 
 </body>
-  </html>
-  
+</html>
