@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KYC - Open Source Community AI Project</title>
+  
+  <!-- Clerk SDK (UI Bileşenleri Desteği ile) -->
+  <script
+    async
+    crossorigin="anonymous"
+    data-clerk-publishable-key="pk_test_cmVhZHktZ3JvdXBlci0zNzYwLmNsZXJrLmFjY291bnRzLmRldiQ"
+    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js">
+  </script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: #ffffff;
+      color: #111111;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      transition: background 0.3s ease;
+    }
+
+    body.confetti-bg {
+      background-color: #ffffff;
+      background-image: 
+        radial-gradient(#ffd1dc 18%, transparent 19%),
+        radial-gradient(#c7ceea 18%, transparent 19%),
+        radial-gradient(#e2f0cb 18%, transparent 19%),
+        radial-gradient(#ffdac1 18%, transparent 19%);
+      background-size: 50px 50px;
+      background-position: 0 0, 25px 25px, 12px 37px, 37px 12px;
+    }
+
+    .top-bar {
+      width: 100%;
+      background-color: #ffffff;
+      border-bottom: 1px solid #eeeeee;
+      padding: 12px 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .top-bar img {
+      height: 50px;
+      width: auto;
+      display: block;
+    }
+
+    .top-bar-text {
+      display: none;
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      color: #000000;
+    }
+
+    .home-container {
+      width: 100%;
+      max-width: 900px;
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 45px;
+    }
+
+    .hero-section {
+      text-align: center;
+      max-width: 650px;
+    }
+
+    .hero-title {
+      font-size: 28px;
+      font-weight: 800;
+      color: #000000;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+    }
+
+    .hero-desc {
+      font-size: 15px;
+      color: #555555;
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+
+    .start-btn {
+      background-color: #3b59d8;
+      color: #ffffff;
+      border: none;
+      padding: 16px 42px;
+      font-size: 16px;
+      font-weight: 700;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .start-btn:hover {
+      background-color: #2d47ba;
+    }
+
+    .showcase-section {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .showcase-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #666666;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .showcase-grid {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+
+    .showcase-grid img {
+      width: 140px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 1px solid #e5e5e5;
+    }
+
+    .footer-section {
+      width: 100%;
+      margin-top: auto;
+      padding: 30px 20px;
+      border-top: 1px solid #eeeeee;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      font-size: 12px;
+      color: #777777;
+      text-align: center;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 20px;
+    }
+
+    .footer-links a {
+      color: #555555;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    /* DOĞRULAMA KARTI */
+    .card {
+      display: none;
+      width: 100%;
+      max-width: 500px;
+      flex-direction: column;
+      gap: 15px;
+      margin: auto;
+      padding: 20px 0;
+    }
+
+    .header {
+      background-color: #3b59d8;
+      color: #ffffff;
+      padding: 20px;
+      border-radius: 2px;
+    }
+
+    .header .sub-title {
+      font-size: 13px;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+      opacity: 0.9;
+    }
+
+    .header .main-title {
+      font-size: 22px;
+      font-weight: bold;
+      line-height: 1.3;
+    }
+
+    .image-container {
+      width: 100%;
+      height: 300px;
+      background-color: #aaaaaa;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 2px;
+      overflow: hidden;
+      transition: opacity 0.2s ease;
+    }
+
+    .image-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .image-container.loading {
+      opacity: 0.4;
+    }
+
+    .form-container {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .input-box {
+      width: 100%;
+      padding: 14px;
+      background-color: #dddddd;
+      border: none;
+      outline: none;
+      font-size: 15px;
+      color: #333333;
+      text-align: center;
+      border-radius: 2px;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      background-color: #3b59d8;
+      color: #ffffff;
+      border: none;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+
+    .submit-btn:disabled {
+      background-color: #7b92f0;
+      cursor: not-allowed;
+    }
+
+    /* BİTİŞ EKRANI */
+    .completion-screen {
+      display: none;
+      width: 100%;
+      max-width: 500px;
+      text-align: center;
+      padding: 20px;
+      margin: auto;
+    }
+
+    .checkmark-circle {
+      width: 110px;
+      height: 110px;
+      background-color: #10c838;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0 auto 30px auto;
+    }
+
+    .checkmark-circle::after {
+      content: '';
+      width: 30px;
+      height: 55px;
+      border: solid white;
+      border-width: 0 9px 9px 0;
+      transform: rotate(45deg);
+      margin-bottom: 10px;
+    }
+
+    .completion-title {
+      font-size: 32px;
+      font-weight: 900;
+      color: #000000;
+      margin-bottom: 10px;
+    }
+
+    .completion-subtitle {
+      font-size: 20px;
+      color: #333333;
+      margin-bottom: 35px;
+    }
+
+    .home-btn {
+      background-color: #4ed157;
+      color: #ffffff;
+      border: none;
+      padding: 16px 40px;
+      font-size: 17px;
+      font-weight: bold;
+      border-radius: 30px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- EN ÜST SABİT BAR -->
+  <div class="top-bar">
+    <img id="top-logo-img" src="https://i.supaimg.com/f97c7625-689d-4f4f-8049-c33b1b9d42b9/f2fe2a2f-0c9c-46e5-9e0f-7a9fc4534db4.png" alt="KYC Logo">
+    <div id="top-logo-text" class="top-bar-text">KYC OSCAP</div>
+  </div>
+
+  <!-- ANA EKRAN -->
+  <div class="home-container" id="home-screen">
+    <div class="hero-section">
+      <div class="hero-title">Görsel İşleme Model Eğitimi</div>
+      <div class="hero-desc">
+        Açık kaynak veri topluluğumuza katkıda bulunarak nesne ve metin tespiti yapan yapay zeka modelimizin doğruluk oranını artırın.
+      </div>
+      <button class="start-btn" onclick="startProcess()">ETİKETLEMEYE BAŞLA</button>
+    </div>
+
+    <div class="showcase-section">
+      <div class="showcase-title">Model Tarafından Analiz Edilmiş Örnek Veriler</div>
+      <div class="showcase-grid">
+        <img src="https://i.supaimg.com/f97c7625-689d-4f4f-8049-c33b1b9d42b9/89f3fd88-2a61-4e1b-b8b2-913e92c40ec6.png" alt="ODR 1">
+        <img src="https://i.supaimg.com/f97c7625-689d-4f4f-8049-c33b1b9d42b9/d2041bec-45a4-42f0-934a-3865023898ca.png" alt="ODR 2">
+        <img src="https://i.supaimg.com/f97c7625-689d-4f4f-8049-c33b1b9d42b9/2ee04590-797c-48d3-b352-5ab8909ae25a.png" alt="ODR 3">
+        <img src="https://i.supaimg.com/f97c7625-689d-4f4f-8049-c33b1b9d42b9/a98d59e5-e472-46be-9faa-c654375268de.png" alt="ODR 4">
+      </div>
+    </div>
+
+    <div class="footer-section">
+      <div class="footer-links">
+        <a href="javascript:void(0)">Gizlilik Politikası</a>
+        <a href="javascript:void(0)">Kullanıcı Sözleşmesi</a>
+        <a href="javascript:void(0)">Topluluk Kuralları</a>
+      </div>
+      <div>© 2026 KYC Open Source Community AI Project. Tüm hakları saklıdır.</div>
+    </div>
+  </div>
+
+  <!-- DOĞRULAMA KARTI -->
+  <div class="card" id="captcha-card">
+    <div class="header">
+      <div class="sub-title">Lütfen görseli inceleyin</div>
+      <div class="main-title">Lütfen görselde ne gördüğünüzü aşağıdaki kutucuğa yazın</div>
+    </div>
+
+    <div class="image-container" id="image-box">
+      <img id="main-image" src="https://picsum.photos/600/400?random=1" alt="İşlenecek Görsel">
+    </div>
+
+    <form class="form-container" onsubmit="submitForm(event)">
+      <input 
+        type="text" 
+        class="input-box" 
+        id="user-input" 
+        placeholder="Gördüğünüzü buraya yazın..." 
+        autocomplete="off" 
+        required
+      >
+      <button type="submit" class="submit-btn" id="submit-btn">Gönder</button>
+    </form>
+  </div>
+
+  <!-- BİTİŞ EKRANI -->
+  <div class="completion-screen" id="completion-screen">
+    <div class="checkmark-circle"></div>
+    <div class="completion-title">BUGÜNLÜK BU KADAR</div>
+    <div class="completion-subtitle">Desteğin için teşekkürler</div>
+    <button class="home-btn" onclick="javascript:void(0)">ANA EKRANA DÖN</button>
+  </div>
+
+  <script>
+    let solveCount = 0;
+    const maxSolves = Math.floor(Math.random() * 3) + 4;
+
+    window.addEventListener('load', async () => {
+      // Clerk bileşenlerini sorunsuz yükle
+      await window.Clerk.load();
+
+      if (window.Clerk.user) {
+        showLabellingScreen();
+      }
+    });
+
+    async function startProcess() {
+      if (!window.Clerk.user) {
+        // Hazır giriş/kayıt pop-up ekranını tetikler
+        window.Clerk.openSignIn();
+      } else {
+        showLabellingScreen();
+      }
+    }
+
+    function showLabellingScreen() {
+      document.getElementById('home-screen').style.display = 'none';
+      document.getElementById('top-logo-img').style.display = 'none';
+      document.getElementById('top-logo-text').style.display = 'block';
+      document.getElementById('captcha-card').style.display = 'flex';
+    }
+
+    function submitForm(event) {
+      event.preventDefault();
+
+      const input = document.getElementById('user-input');
+      const img = document.getElementById('main-image');
+      const imageBox = document.getElementById('image-box');
+      const btn = document.getElementById('submit-btn');
+
+      input.value = '';
+      solveCount++;
+
+      if (solveCount >= maxSolves) {
+        btn.disabled = true;
+        btn.innerText = "Yükleniyor...";
+        imageBox.classList.add('loading');
+
+        setTimeout(() => {
+          document.getElementById('captcha-card').style.display = 'none';
+          document.getElementById('completion-screen').style.display = 'block';
+          document.body.classList.add('confetti-bg');
+        }, 800);
+
+      } else {
+        btn.disabled = true;
+        btn.innerText = "Yükleniyor...";
+        imageBox.classList.add('loading');
+
+        setTimeout(() => {
+          const randomId = Math.floor(Math.random() * 1000);
+          img.src = `https://picsum.photos/600/400?random=${randomId}`;
+
+          btn.disabled = false;
+          btn.innerText = "Gönder";
+          imageBox.classList.remove('loading');
+          input.focus();
+        }, 800);
+      }
+    }
+  </script>
+
+</body>
+  </html>
+  
