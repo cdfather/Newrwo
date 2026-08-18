@@ -4,14 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>KYC - Open Source Community AI Project</title>
-  
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"></script>
 
-  <!-- FirebaseUI -->
-  <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.0.0/firebase-ui-auth.css" />
-  <script src="https://www.gstatic.com/firebasejs/ui/6.0.0/firebase-ui-auth.js"></script>
+  <!-- Firebase JavaScript SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+  <!-- FirebaseUI Library & Styles -->
+  <script src="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.js"></script>
+  <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.css" />
 
   <style>
     * {
@@ -346,71 +346,13 @@
     }
 
     #firebaseui-auth {
-      padding: 40px 20px;
-    }
-
-    #firebaseui-container .firebaseui-container {
-      padding: 0;
-      background: transparent;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
-
-    /* FirebaseUI Button Styling */
-    .firebaseui-button {
-      background-color: #3b59d8 !important;
-      border: none !important;
-      border-radius: 6px !important;
-      font-weight: 600 !important;
-      padding: 12px 16px !important;
-      margin-bottom: 8px !important;
-    }
-
-    .firebaseui-button:hover {
-      background-color: #2d47ba !important;
-    }
-
-    .firebaseui-id-button-anonymous {
-      display: none !important;
-    }
-
-    .firebaseui-textfield {
-      width: 100% !important;
-      margin-bottom: 12px !important;
-    }
-
-    .firebaseui-textfield input {
-      padding: 12px !important;
-      border-radius: 6px !important;
-      font-size: 14px !important;
-    }
-
-    .firebaseui-label {
-      font-size: 14px !important;
-      color: #333 !important;
-      margin-bottom: 6px !important;
-    }
-
-    .firebaseui-title {
-      font-size: 24px;
-      font-weight: bold;
-      color: #000;
-      margin-bottom: 8px;
-    }
-
-    .firebaseui-subtitle {
-      font-size: 14px;
-      color: #666;
-      margin-bottom: 24px;
+      padding: 20px;
     }
 
     @media (max-width: 768px) {
       .firebaseui-box {
         max-width: 95vw;
         border-radius: 12px;
-      }
-
-      #firebaseui-auth {
-        padding: 30px 15px;
       }
     }
   </style>
@@ -424,8 +366,8 @@
   </div>
 
   <!-- FIREBASEUI CONTAINER -->
-  <div id="firebaseui-container">
-    <div class="firebaseui-box">
+  <div id="firebaseui-container" onclick="closeAuthModal(event)">
+    <div class="firebaseui-box" onclick="event.stopPropagation()">
       <div id="firebaseui-auth"></div>
     </div>
   </div>
@@ -457,20 +399,6 @@
         <a href="javascript:void(0)">Topluluk Kuralları</a>
       </div>
       <div>© 2026 KYC Open Source Community AI Project. Tüm hakları saklıdır.</div>
-    </div>
-  </div>
-
-  <!-- OAUTH MODAL -->
-  <div class="oauth-modal" id="oauth-modal">
-    <div class="oauth-box">
-      <div class="oauth-title">Giriş Yap</div>
-      <div class="oauth-desc">Devam etmek için seçin</div>
-      
-      <div class="oauth-buttons">
-        <button class="oauth-btn" onclick="signInWithGoogle()">
-          <span>🔵</span> Google ile
-        </button>
-      </div>
     </div>
   </div>
 
@@ -523,6 +451,7 @@
 
     let solveCount = 0;
     const maxSolves = Math.floor(Math.random() * 3) + 4;
+    let ui;
 
     window.addEventListener('load', () => {
       // FirebaseUI Config
@@ -536,15 +465,16 @@
         privacyPolicyUrl: 'javascript:void(0)',
         callbacks: {
           signInSuccessWithAuthResult: function(authResult) {
+            document.getElementById('firebaseui-container').classList.remove('active');
             showLabellingScreen();
             return false;
           }
         }
       };
 
-      // Initialize FirebaseUI
-      const ui = new firebaseui.auth.AuthUI(auth);
-      
+      // Initialize FirebaseUI Instance
+      ui = firebaseui.auth.AuthUI.getInstance() || new firebaseui.auth.AuthUI(auth);
+
       // Check auth state
       auth.onAuthStateChanged((user) => {
         if (user) {
@@ -552,15 +482,26 @@
         }
       });
 
-      // Auth UI render func - global'e koy
+      // Auth UI render function
       window.renderAuthUI = function() {
         ui.start('#firebaseui-auth', uiConfig);
       };
     });
 
     function startProcess() {
-      document.getElementById('firebaseui-container').classList.add('active');
-      window.renderAuthUI();
+      // Oturum açık ise direkt etikete yönlendir
+      if (auth.currentUser) {
+        showLabellingScreen();
+      } else {
+        document.getElementById('firebaseui-container').classList.add('active');
+        window.renderAuthUI();
+      }
+    }
+
+    function closeAuthModal(event) {
+      if (event.target.id === 'firebaseui-container') {
+        document.getElementById('firebaseui-container').classList.remove('active');
+      }
     }
 
     function showLabellingScreen() {
@@ -617,4 +558,5 @@
   </script>
 
 </body>
-</html>
+  </html>
+  
