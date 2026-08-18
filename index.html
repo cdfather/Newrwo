@@ -4,7 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>KYC - Open Source Community AI Project</title>
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"></script>
 
+  <!-- FirebaseUI -->
+  <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.0.0/firebase-ui-auth.css" />
+  <script src="https://www.gstatic.com/firebasejs/ui/6.0.0/firebase-ui-auth.js"></script>
 
   <style>
     * {
@@ -310,14 +317,101 @@
       cursor: pointer;
     }
 
-    .error-message {
-      background-color: #ffe6e6;
-      color: #c00000;
-      padding: 12px 16px;
-      border-radius: 4px;
-      font-size: 14px;
-      margin-bottom: 16px;
+    /* FIREBASEUI CONTAINER */
+    #firebaseui-container {
       display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #firebaseui-container.active {
+      display: flex;
+    }
+
+    .firebaseui-box {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      width: 100%;
+      max-width: 420px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    #firebaseui-auth {
+      padding: 40px 20px;
+    }
+
+    #firebaseui-container .firebaseui-container {
+      padding: 0;
+      background: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    /* FirebaseUI Button Styling */
+    .firebaseui-button {
+      background-color: #3b59d8 !important;
+      border: none !important;
+      border-radius: 6px !important;
+      font-weight: 600 !important;
+      padding: 12px 16px !important;
+      margin-bottom: 8px !important;
+    }
+
+    .firebaseui-button:hover {
+      background-color: #2d47ba !important;
+    }
+
+    .firebaseui-id-button-anonymous {
+      display: none !important;
+    }
+
+    .firebaseui-textfield {
+      width: 100% !important;
+      margin-bottom: 12px !important;
+    }
+
+    .firebaseui-textfield input {
+      padding: 12px !important;
+      border-radius: 6px !important;
+      font-size: 14px !important;
+    }
+
+    .firebaseui-label {
+      font-size: 14px !important;
+      color: #333 !important;
+      margin-bottom: 6px !important;
+    }
+
+    .firebaseui-title {
+      font-size: 24px;
+      font-weight: bold;
+      color: #000;
+      margin-bottom: 8px;
+    }
+
+    .firebaseui-subtitle {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 768px) {
+      .firebaseui-box {
+        max-width: 95vw;
+        border-radius: 12px;
+      }
+
+      #firebaseui-auth {
+        padding: 30px 15px;
+      }
     }
   </style>
 </head>
@@ -327,6 +421,13 @@
   <div class="top-bar">
     <img id="top-logo-img" src="https://i.supaimg.com/f97c7625-689d-4f4f-8049-c33b1b9d42b9/f2fe2a2f-0c9c-46e5-9e0f-7a9fc4534db4.png" alt="KYC Logo">
     <div id="top-logo-text" class="top-bar-text">KYC OSCAP</div>
+  </div>
+
+  <!-- FIREBASEUI CONTAINER -->
+  <div id="firebaseui-container">
+    <div class="firebaseui-box">
+      <div id="firebaseui-auth"></div>
+    </div>
   </div>
 
   <!-- ANA EKRAN -->
@@ -359,10 +460,22 @@
     </div>
   </div>
 
+  <!-- OAUTH MODAL -->
+  <div class="oauth-modal" id="oauth-modal">
+    <div class="oauth-box">
+      <div class="oauth-title">Giriş Yap</div>
+      <div class="oauth-desc">Devam etmek için seçin</div>
+      
+      <div class="oauth-buttons">
+        <button class="oauth-btn" onclick="signInWithGoogle()">
+          <span>🔵</span> Google ile
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- DOĞRULAMA KARTI -->
   <div class="card" id="captcha-card">
-    <div class="error-message" id="error-msg"></div>
-    
     <div class="header">
       <div class="sub-title">Lütfen görseli inceleyin</div>
       <div class="main-title">Lütfen görselde ne gördüğünüzü aşağıdaki kutucuğa yazın</div>
@@ -394,44 +507,60 @@
   </div>
 
   <script>
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDlxcZ44w6W2i4bS9d2i1SqVqiwPyTVmI4",
+      authDomain: "kycauth-51122.firebaseapp.com",
+      projectId: "kycauth-51122",
+      storageBucket: "kycauth-51122.firebasestorage.app",
+      messagingSenderId: "810972530155",
+      appId: "1:810972530155:web:848c09f0ac08c11c6685ae"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
     let solveCount = 0;
     const maxSolves = Math.floor(Math.random() * 3) + 4;
 
-    window.addEventListener('load', async () => {
-      try {
-        await window.Clerk.load();
-        
-        // User state değişimini dinle
-        window.Clerk.addListener(({ user }) => {
-          if (user) {
+    window.addEventListener('load', () => {
+      // FirebaseUI Config
+      const uiConfig = {
+        signInSuccessUrl: window.location.href,
+        signInOptions: [
+          firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+          firebase.auth.EmailAuthProvider.PROVIDER_ID
+        ],
+        tosUrl: 'javascript:void(0)',
+        privacyPolicyUrl: 'javascript:void(0)',
+        callbacks: {
+          signInSuccessWithAuthResult: function(authResult) {
             showLabellingScreen();
+            return false;
           }
-        });
-        
-        // Kullanıcı zaten giriş yapmışsa direkt başla
-        if (window.Clerk.user) {
+        }
+      };
+
+      // Initialize FirebaseUI
+      const ui = new firebaseui.auth.AuthUI(auth);
+      
+      // Check auth state
+      auth.onAuthStateChanged((user) => {
+        if (user) {
           showLabellingScreen();
         }
-      } catch (err) {
-        console.error('Clerk yükleme hatası:', err);
-      }
+      });
+
+      // Auth UI render func - global'e koy
+      window.renderAuthUI = function() {
+        ui.start('#firebaseui-auth', uiConfig);
+      };
     });
 
-    async function startProcess() {
-      try {
-        if (!window.Clerk.user) {
-          // GitHub Pages URL'si ile redirect
-          await window.Clerk.openSignIn({
-            afterSignInUrl: 'https://cdfather.github.io/Newrwo/',
-            afterSignUpUrl: 'https://cdfather.github.io/Newrwo/',
-            redirectUrl: 'https://cdfather.github.io/Newrwo/'
-          });
-        } else {
-          showLabellingScreen();
-        }
-      } catch (err) {
-        console.error('Giriş hatası:', err);
-      }
+    function startProcess() {
+      document.getElementById('firebaseui-container').classList.add('active');
+      window.renderAuthUI();
     }
 
     function showLabellingScreen() {
@@ -481,7 +610,9 @@
     }
 
     function goHome() {
-      location.reload();
+      auth.signOut().then(() => {
+        location.reload();
+      });
     }
   </script>
 
