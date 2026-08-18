@@ -454,11 +454,9 @@
     let ui;
 
     window.addEventListener('load', () => {
-      // FirebaseUI Config
+      // FirebaseUI Config (Sadece E-posta girişi)
       const uiConfig = {
-        signInSuccessUrl: window.location.href,
         signInOptions: [
-          firebase.auth.GoogleAuthProvider.PROVIDER_ID,
           firebase.auth.EmailAuthProvider.PROVIDER_ID
         ],
         tosUrl: 'javascript:void(0)',
@@ -489,7 +487,6 @@
     });
 
     function startProcess() {
-      // Oturum açık ise direkt etikete yönlendir
       if (auth.currentUser) {
         showLabellingScreen();
       } else {
@@ -558,5 +555,5 @@
   </script>
 
 </body>
-  </html>
+        </html>
   
