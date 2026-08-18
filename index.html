@@ -726,5 +726,17 @@
 
             btn.disabled = false;
             btn.innerText = "Gönder";
-            imageBox.
+            imageBox.classList.remove('loading');
+      }
+    }
+
+    function goHome() {
+      auth.signOut().then(() => {
+        location.reload();
+      });
+    }
+  </script>
+
+</body>
+</html>
   
