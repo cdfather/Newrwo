@@ -5,13 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>KYC - Open Source Community AI Project</title>
 
-  <!-- Firebase JavaScript SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-
-  <!-- FirebaseUI Library & Styles -->
-  <script src="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.js"></script>
-  <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.css" />
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <style>
     * {
@@ -30,17 +26,6 @@
       align-items: center;
       min-height: 100vh;
       transition: background 0.3s ease;
-    }
-
-    body.confetti-bg {
-      background-color: #ffffff;
-      background-image: 
-        radial-gradient(#ffd1dc 18%, transparent 19%),
-        radial-gradient(#c7ceea 18%, transparent 19%),
-        radial-gradient(#e2f0cb 18%, transparent 19%),
-        radial-gradient(#ffdac1 18%, transparent 19%);
-      background-size: 50px 50px;
-      background-position: 0 0, 25px 25px, 12px 37px, 37px 12px;
     }
 
     .top-bar {
@@ -104,8 +89,8 @@
       background-color: #3b59d8;
       color: #ffffff;
       border: none;
-      padding: 16px 42px;
-      font-size: 16px;
+      padding: 14px 32px;
+      font-size: 15px;
       font-weight: 700;
       border-radius: 6px;
       cursor: pointer;
@@ -173,7 +158,6 @@
       font-weight: 600;
     }
 
-    /* DOĞRULAMA KARTI */
     .card {
       display: none;
       width: 100%;
@@ -262,7 +246,6 @@
       cursor: not-allowed;
     }
 
-    /* BİTİŞ EKRANI */
     .completion-screen {
       display: none;
       width: 100%;
@@ -317,8 +300,7 @@
       cursor: pointer;
     }
 
-    /* FIREBASEUI CONTAINER */
-    #firebaseui-container {
+    #custom-auth-modal {
       display: none;
       position: fixed;
       top: 0;
@@ -331,55 +313,140 @@
       align-items: center;
     }
 
-    #firebaseui-container.active {
+    #custom-auth-modal.active {
       display: flex;
     }
 
-    .firebaseui-box {
+    .auth-box {
       background: white;
       border-radius: 8px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      padding: 30px 24px 24px 24px;
       width: 100%;
-      max-width: 420px;
-      max-height: 90vh;
-      overflow-y: auto;
+      max-width: 380px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     }
 
-    #firebaseui-auth {
-      padding: 20px;
+    .auth-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: #000000;
+      margin-bottom: 20px;
+      margin-top: 10px;
+      text-align: center;
     }
 
-    @media (max-width: 768px) {
-      .firebaseui-box {
-        max-width: 95vw;
-        border-radius: 12px;
-      }
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .auth-input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #cccccc;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .auth-submit-btn {
+      background-color: #3b59d8;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .auth-toggle-text {
+      font-size: 13px;
+      color: #555555;
+      text-align: center;
+      margin-top: 16px;
+    }
+
+    .auth-toggle-link {
+      color: #3b59d8;
+      font-weight: bold;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    .auth-error {
+      color: #d93025;
+      font-size: 13px;
+      text-align: center;
+      margin-bottom: 10px;
+      display: none;
+    }
+
+    .back-step-btn {
+      background: none;
+      border: none;
+      color: #666666;
+      font-size: 13px;
+      cursor: pointer;
+      margin-bottom: 10px;
+      text-align: left;
+      padding: 0;
     }
   </style>
 </head>
 <body>
 
-  <!-- EN ÜST SABİT BAR -->
   <div class="top-bar">
     <img id="top-logo-img" src="https://i.supaimg.com/f97c7625-689d-4f4f-8049-c33b1b9d42b9/f2fe2a2f-0c9c-46e5-9e0f-7a9fc4534db4.png" alt="KYC Logo">
     <div id="top-logo-text" class="top-bar-text">KYC OSCAP</div>
   </div>
 
-  <!-- FIREBASEUI CONTAINER -->
-  <div id="firebaseui-container" onclick="closeAuthModal(event)">
-    <div class="firebaseui-box" onclick="event.stopPropagation()">
-      <div id="firebaseui-auth"></div>
+  <div id="custom-auth-modal" onclick="closeAuthModal(event)">
+    <div class="auth-box" onclick="event.stopPropagation()">
+      <div class="auth-error" id="auth-error-msg"></div>
+
+      <div id="login-step-1">
+        <div class="auth-title">Giriş Yap</div>
+        <form class="auth-form" onsubmit="goToPasswordStep(event)">
+          <input type="email" id="login-email" class="auth-input" placeholder="E-posta" required>
+          <button type="submit" class="auth-submit-btn">Devam Et</button>
+        </form>
+        <div class="auth-toggle-text">
+          Hesabınız yok mu? <span class="auth-toggle-link" onclick="showRegisterScreen()">Kayıt olun</span>
+        </div>
+      </div>
+
+      <div id="login-step-2" style="display: none;">
+        <button class="back-step-btn" onclick="backToEmailStep()">← E-postayı değiştir</button>
+        <div class="auth-title">Şifrenizi Girin</div>
+        <form class="auth-form" onsubmit="handleLogin(event)">
+          <input type="password" id="login-password" class="auth-input" placeholder="Şifre" required>
+          <button type="submit" class="auth-submit-btn">Giriş Yap</button>
+        </form>
+      </div>
+
+      <div id="register-screen" style="display: none;">
+        <div class="auth-title">Kayıt Ol</div>
+        <form class="auth-form" onsubmit="handleRegister(event)">
+          <input type="text" id="register-username" class="auth-input" placeholder="Kullanıcı Adı" required>
+          <input type="email" id="register-email" class="auth-input" placeholder="E-posta" required>
+          <input type="password" id="register-password" class="auth-input" placeholder="Şifre (En az 6 karakter)" required minlength="6">
+          <button type="submit" class="auth-submit-btn">Kayıt Ol</button>
+        </form>
+        <div class="auth-toggle-text">
+          Zaten hesabınız var mı? <span class="auth-toggle-link" onclick="showLoginScreen()">Giriş yapın</span>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- ANA EKRAN -->
   <div class="home-container" id="home-screen">
     <div class="hero-section">
       <div class="hero-title">Görsel İşleme Model Eğitimi</div>
       <div class="hero-desc">
         Açık kaynak veri topluluğumuza katkıda bulunarak nesne ve metin tespiti yapan yapay zeka modelimizin doğruluk oranını artırın.
       </div>
-      <button class="start-btn" onclick="startProcess()">ETİKETLEMEYE BAŞLA</button>
+      <button class="start-btn" onclick="openAuthModal()">ETİKETLEMEYE BAŞLA</button>
     </div>
 
     <div class="showcase-section">
@@ -402,7 +469,6 @@
     </div>
   </div>
 
-  <!-- DOĞRULAMA KARTI -->
   <div class="card" id="captcha-card">
     <div class="header">
       <div class="sub-title">Lütfen görseli inceleyin</div>
@@ -426,7 +492,6 @@
     </form>
   </div>
 
-  <!-- BİTİŞ EKRANI -->
   <div class="completion-screen" id="completion-screen">
     <div class="checkmark-circle"></div>
     <div class="completion-title">BUGÜNLÜK BU KADAR</div>
@@ -435,7 +500,6 @@
   </div>
 
   <script>
-    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyDlxcZ44w6W2i4bS9d2i1SqVqiwPyTVmI4",
       authDomain: "kycauth-51122.firebaseapp.com",
@@ -445,70 +509,185 @@
       appId: "1:810972530155:web:848c09f0ac08c11c6685ae"
     };
 
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
+    const db = firebase.firestore();
 
     let solveCount = 0;
-    const maxSolves = Math.floor(Math.random() * 3) + 4;
-    let ui;
+    let maxSolves = 0;
+
+    function getTodayString() {
+      const today = new Date();
+      return today.toISOString().split('T')[0];
+    }
 
     window.addEventListener('load', () => {
-      // FirebaseUI Config (Sadece E-posta girişi)
-      const uiConfig = {
-        signInOptions: [
-          firebase.auth.EmailAuthProvider.PROVIDER_ID
-        ],
-        tosUrl: 'javascript:void(0)',
-        privacyPolicyUrl: 'javascript:void(0)',
-        callbacks: {
-          signInSuccessWithAuthResult: function(authResult) {
-            document.getElementById('firebaseui-container').classList.remove('active');
-            showLabellingScreen();
-            return false;
-          }
-        }
-      };
-
-      // Initialize FirebaseUI Instance
-      ui = firebaseui.auth.AuthUI.getInstance() || new firebaseui.auth.AuthUI(auth);
-
-      // Check auth state
       auth.onAuthStateChanged((user) => {
         if (user) {
-          showLabellingScreen();
+          closeAuthModal();
+          handleUserFlow(user);
         }
       });
-
-      // Auth UI render function
-      window.renderAuthUI = function() {
-        ui.start('#firebaseui-auth', uiConfig);
-      };
     });
 
-    function startProcess() {
-      if (auth.currentUser) {
-        showLabellingScreen();
-      } else {
-        document.getElementById('firebaseui-container').classList.add('active');
-        window.renderAuthUI();
+    function openAuthModal() {
+      const modal = document.getElementById('custom-auth-modal');
+      if (modal) {
+        modal.classList.add('active');
+        showLoginScreen();
       }
     }
 
     function closeAuthModal(event) {
-      if (event.target.id === 'firebaseui-container') {
-        document.getElementById('firebaseui-container').classList.remove('active');
+      if (!event || event.target.id === 'custom-auth-modal') {
+        const modal = document.getElementById('custom-auth-modal');
+        if (modal) modal.classList.remove('active');
+        clearAuthErrors();
+      }
+    }
+
+    function clearAuthErrors() {
+      const errorDiv = document.getElementById('auth-error-msg');
+      if (errorDiv) {
+        errorDiv.innerText = '';
+        errorDiv.style.display = 'none';
+      }
+    }
+
+    function showLoginScreen() {
+      clearAuthErrors();
+      document.getElementById('login-step-1').style.display = 'block';
+      document.getElementById('login-step-2').style.display = 'none';
+      document.getElementById('register-screen').style.display = 'none';
+    }
+
+    function goToPasswordStep(e) {
+      e.preventDefault();
+      clearAuthErrors();
+      document.getElementById('login-step-1').style.display = 'none';
+      document.getElementById('login-step-2').style.display = 'block';
+    }
+
+    function backToEmailStep() {
+      clearAuthErrors();
+      document.getElementById('login-step-2').style.display = 'none';
+      document.getElementById('login-step-1').style.display = 'block';
+    }
+
+    function showRegisterScreen() {
+      clearAuthErrors();
+      document.getElementById('login-step-1').style.display = 'none';
+      document.getElementById('login-step-2').style.display = 'none';
+      document.getElementById('register-screen').style.display = 'block';
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      clearAuthErrors();
+
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      const errorDiv = document.getElementById('auth-error-msg');
+
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+      } catch (err) {
+        errorDiv.innerText = "Giriş başarısız: E-posta veya şifre hatalı.";
+        errorDiv.style.display = 'block';
+      }
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      clearAuthErrors();
+
+      const username = document.getElementById('register-username').value;
+      const email = document.getElementById('register-email').value;
+      const password = document.getElementById('register-password').value;
+      const errorDiv = document.getElementById('auth-error-msg');
+
+      try {
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+
+        await user.updateProfile({
+          displayName: username
+        });
+
+        await db.collection('users').doc(user.uid).set({
+          username: username,
+          email: email,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+
+      } catch (err) {
+        errorDiv.innerText = err.message || "Kayıt sırasında bir hata oluştu.";
+        errorDiv.style.display = 'block';
+      }
+    }
+
+    async function handleUserFlow(user) {
+      const today = getTodayString();
+      const userRef = db.collection('users').doc(user.uid);
+
+      try {
+        const doc = await userRef.get();
+
+        if (doc.exists) {
+          const data = doc.data();
+          if (data.lastDate === today) {
+            solveCount = data.solveCount || 0;
+            // It's not important
+            maxSolves = data.maxSolves || (Math.floor(Math.random() * 3) + 4);
+          } else {
+            solveCount = 0;
+            // It's not important
+            maxSolves = Math.floor(Math.random() * 3) + 4;
+            await userRef.set({
+              lastDate: today,
+              solveCount: solveCount,
+              maxSolves: maxSolves
+            }, { merge: true });
+          }
+        } else {
+          solveCount = 0;
+          // It's not important
+          maxSolves = Math.floor(Math.random() * 3) + 4;
+          await userRef.set({
+            lastDate: today,
+            solveCount: solveCount,
+            maxSolves: maxSolves
+          }, { merge: true });
+        }
+
+        if (solveCount >= maxSolves) {
+          showCompletionScreen();
+        } else {
+          showLabellingScreen();
+        }
+      } catch (error) {
+        console.error("Firestore veri çekme hatası:", error);
+        showLabellingScreen();
       }
     }
 
     function showLabellingScreen() {
       document.getElementById('home-screen').style.display = 'none';
+      document.getElementById('completion-screen').style.display = 'none';
       document.getElementById('top-logo-img').style.display = 'none';
       document.getElementById('top-logo-text').style.display = 'block';
       document.getElementById('captcha-card').style.display = 'flex';
     }
 
-    function submitForm(event) {
+    function showCompletionScreen() {
+      document.getElementById('home-screen').style.display = 'none';
+      document.getElementById('captcha-card').style.display = 'none';
+      document.getElementById('top-logo-img').style.display = 'none';
+      document.getElementById('top-logo-text').style.display = 'block';
+      document.getElementById('completion-screen').style.display = 'block';
+    }
+
+    async function submitForm(event) {
       event.preventDefault();
 
       const input = document.getElementById('user-input');
@@ -516,44 +695,36 @@
       const imageBox = document.getElementById('image-box');
       const btn = document.getElementById('submit-btn');
 
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+
       input.value = '';
       solveCount++;
 
-      if (solveCount >= maxSolves) {
-        btn.disabled = true;
-        btn.innerText = "Yükleniyor...";
-        imageBox.classList.add('loading');
+      const today = getTodayString();
+      const userRef = db.collection('users').doc(currentUser.uid);
 
-        setTimeout(() => {
-          document.getElementById('captcha-card').style.display = 'none';
-          document.getElementById('completion-screen').style.display = 'block';
-          document.body.classList.add('confetti-bg');
-        }, 800);
+      btn.disabled = true;
+      btn.innerText = "Yükleniyor...";
+      imageBox.classList.add('loading');
 
-      } else {
-        btn.disabled = true;
-        btn.innerText = "Yükleniyor...";
-        imageBox.classList.add('loading');
+      try {
+        await userRef.set({
+          lastDate: today,
+          solveCount: solveCount,
+          maxSolves: maxSolves
+        }, { merge: true });
 
-        setTimeout(() => {
-          const randomId = Math.floor(Math.random() * 1000);
-          img.src = `https://picsum.photos/600/400?random=${randomId}`;
+        if (solveCount >= maxSolves) {
+          setTimeout(() => {
+            showCompletionScreen();
+          }, 800);
+        } else {
+          setTimeout(() => {
+            const randomId = Math.floor(Math.random() * 1000);
+            img.src = `https://picsum.photos/600/400?random=${randomId}`;
 
-          btn.disabled = false;
-          btn.innerText = "Gönder";
-          imageBox.classList.remove('loading');
-          input.focus();
-        }, 800);
-      }
-    }
-
-    function goHome() {
-      auth.signOut().then(() => {
-        location.reload();
-      });
-    }
-  </script>
-
-</body>
-        </html>
+            btn.disabled = false;
+            btn.innerText = "Gönder";
+            imageBox.
   
